@@ -1,0 +1,148 @@
+﻿@page
+@model SeatPlan.Pages.EditModel
+@{
+}
+<h2>Edit Seat</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" id="error-alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (Model.successMessage.Length > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>@Model.successMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<form method="POST">
+    <input type="hidden" name="LocationID" value="@Model.seatInfo.LocationID" />
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Space ID</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="spaceID" value="@Model.seatInfo.SpaceID" maxlength="20" readonly />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Space Use Type @Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="spaceUse" value="@Model.seatInfo.SpaceUse" maxlength="30" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Assigned Staff (Name)</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="name" value="@Model.seatInfo.Name" hidden readonly />
+            <select id="ddlStaff" class="form-control" asp-items="@Model.Staff" asp-for="SelectedStaffID">
+                <option value="0">--Select Staff Name--</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">or Assigned Room (Name)</label>
+        <div class="col-sm-6">
+            <select id="ddlRoom" class="form-control" asp-items="@Model.Room" asp-for="SelectedRoomID">
+                <option value="0">--Select Room Name--</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Department</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="department" value="@Model.seatInfo.Department" maxlength="25" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Location (Floor Building Country)@Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <select id="ddlLocation" class="form-control" asp-items="@Model.Locations" asp-for="SelectedLocation" onchange="sendLocData()">
+                <option value="0">--Select Location--</option>
+            </select>
+        </div>
+    </div>
+    <br />
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Share Seat with who (If Any)</label>
+        <div class="col-sm-6">
+            <select id="ddlSharedStaff" class="form-control" asp-items="@Model.SharedStaff" asp-for="SelectedSharedStaffID" style="color:green">
+                <option value="0">--No Seat Sharing--</option>
+            </select>
+        </div>
+    </div>
+    <br />
+    <div class="row mb-3">
+        <div class="offset-sm-3 col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary" id="btnCancel" asp-page="./Index" role="button">Cancel</a>
+        </div>
+    </div>
+
+</form>
+@section Scripts{
+    <script>
+        document.getElementById("btnCancel").onclick = function () {
+            document.getElementById("btnCancel").href += "?id=" + @Model.seatInfo.LocationID;
+        };
+        $('#ddlStaff').change(function () {
+            $('#ddlRoom option:first').prop('selected', 'selected');
+        });
+        $('#ddlRoom').change(function () {
+            $('#ddlStaff option:first').prop('selected', 'selected');
+            $('#ddlSharedStaff option:first').prop('selected', 'selected');
+        });
+        $("#error-alert").fadeTo(3000, 500).slideUp(500, function () {
+            history.back();
+        });
+        function sendLocData() {
+            $("#error-alert").alert("close");
+            var token = '@Html.AntiForgeryToken()';
+            $.ajax({
+                type: 'GET',
+                url: '?handler=Location',
+                data: { selectedLocationID: $('#ddlLocation').val() },
+                headers: {
+                    RequestVerificationToken: $(token).val()
+                },
+                success: function (data) {
+                    $('#ddlStaff').empty();
+                    $('#ddlSharedStaff').empty();
+                    $('#ddlRoom').empty();
+                    $('#ddlStaff').append('<option value="0">--Select Staff Name--</option>');
+                    $('#ddlRoom').append('<option value="0">--Select Room Name--</option>');
+                    $('#ddlSharedStaff').append('<option value="0">--No Seat Sharing--</option>');
+                    var items = '';
+                    var isRoom = false;
+                    $.each(data, function (i, item) {
+                        var option = '<option value="' + item.value + '">' + item.text + '</option>';
+                        if (item.value == "**") {
+                            isRoom = true;
+                        }
+                        else {
+                            if (isRoom) {
+                                $('#ddlRoom').append(option);
+                            } else {
+                                $('#ddlStaff').append(option);
+                                $('#ddlSharedStaff').append(option);
+                            }
+                        }
+                    });
+                    $('#ddlStaff').change();
+                    $('#ddlRoom').change();
+                    $('#ddlSharedStaff').change();
+                },
+                error: function () {
+                    //alert("error");
+                }
+            })
+        }
+    </script>
+}

@@ -1,0 +1,65 @@
+﻿@page
+@model SeatPlan.Pages.EditRoomModel
+@{
+}
+<h2>Edit Room</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" id="error-alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (Model.successMessage.Length > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>@Model.successMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<form method="POST">
+    <input type="hidden" name="LocationID" value="@Model.roomInfo.LocationID" />
+    <input type="hidden" name="RoomID" value="@Model.roomInfo.RoomID" />
+    <input type="hidden" name="UrlBack" value="@Model.UrlBack" />
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Room Name @Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="name" value="@Model.roomInfo.Name" maxlength="30" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Phone Number</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" name="phoneNumber" value="@Model.roomInfo.PhoneNumber" maxlength="30" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Location (Floor Building Country)@Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <select id="ddlLocation" class="form-control" asp-items="@Model.Locations" asp-for="SelectedLocation">
+                <option value="0">--Select Location--</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="offset-sm-3 col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary" id="btnCancel" onclick="history.back()" role="button">Cancel</a>
+        </div>
+    </div>
+</form>
+@section Scripts{
+    <script>
+        $("#error-alert").fadeTo(3000, 500).slideUp(500, function () {
+            history.back();
+        });
+    </script>
+}

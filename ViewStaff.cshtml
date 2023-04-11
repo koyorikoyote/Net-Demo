@@ -1,0 +1,111 @@
+﻿@page
+@model SeatPlan.Pages.ViewStaffModel
+@{
+    ViewData["Title"] = "View Staffs";
+
+    String strStatus = Request.Query["status"].ToString();
+}
+<h2>View Staffs @Model.LocationName</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (String.IsNullOrEmpty(strStatus) == false)
+{
+    @if (strStatus == "error")
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
+            <strong>An @strStatus was encountered. This operation cannot be performed while another entry already exists.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+            <strong>Entry @strStatus successfully.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}
+<div>
+    <div style="float: left; padding-bottom: 10px;">
+        <a class='btn btn-primary btn-sm' id='btnNewStaff' asp-page='./CreateStaff'>Create new Staff</a>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col-sm-3">
+        <input type="text" id="txtSearchStaffs" onkeyup="filterTableStaffs()" placeholder="Search for ...">
+    </div>
+    <div class="offset-sm-5 col-sm-3 d-grid">
+        <a class="btn btn-outline-primary btn-sm" id="btnBack" asp-page="./Index" role="button">Back to Home</a>
+    </div>
+</div>
+<table id="tblStaffs" class="table">
+    <thead>
+        <tr>
+            <th>Staff Name</th>
+            <th>Phone Number Ext.</th>
+            <th>Floor</th>
+            <th>Modified On</th>
+            <th>@if (Model.isAdmin)
+                {
+                    <a class="btn btn-secondary btn-sm" id="btnPreAddStaffs" asp-page="./PreAddStaffs" role="button">Pre-Add new Staffs</a>
+                }</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.listStaffs)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.PhoneNumber</td>
+                <td>@item.Floor</td>
+                <td>@item.ModifiedOn</td>
+                <td>
+                    <a class="btn btn-primary btn-sm" asp-page="./EditStaff" asp-route-id="@item.StaffID">Edit</a>
+                    <a class="btn btn-danger btn-sm" asp-page="./DeleteStaff" asp-route-id="@item.StaffID" onclick="return confirm('Are you sure you want to DELETE this row from the database?');">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts{
+    <script>
+        window.onpageshow = function (event) {
+            filterTableStaffs();
+        };
+        document.getElementById("btnNewStaff").onclick = function () {
+            document.getElementById("btnNewStaff").href += "?id=" + @Model.staffInfo.LocationID;
+        };
+        document.getElementById("btnBack").onclick = function () {
+            document.getElementById("btnBack").href += "?id=" + @Model.staffInfo.LocationID;
+        };
+        function filterTableStaffs() {
+            var filter, txtValue;
+            filter = $('#txtSearchStaffs').val().trim().toLowerCase();
+            if (!filter) {
+                $('#tblStaffs tbody tr').each(function () {
+                    this.style.display = '';
+                });
+                return;
+            }
+            $('#tblStaffs tbody tr').each(function () {
+                $(this).css('display', 'none');
+                $(this).find('td').not(':last').each(function (column, td) {
+                    txtValue = $(td).text().trim().toLowerCase();
+                    if (~txtValue.indexOf(filter)) {
+                        $(td).parent().css('display', '');
+                    }
+                });
+            });
+        }
+        $("#success-alert").fadeTo(10000, 500).slideUp(500, function () {
+            $("#success-alert").slideUp(500);
+            $("#success-alert").alert("close");
+        });
+    </script>
+}

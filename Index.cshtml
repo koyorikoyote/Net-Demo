@@ -1,0 +1,204 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Seat Plan";
+
+    String strStatus = Request.Query["status"].ToString();
+}
+<h2>Seating Layout Info</h2>
+@if (String.IsNullOrEmpty(strStatus) == false)
+{
+    @if (strStatus == "error")
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
+            <strong>An @strStatus was encountered. This operation cannot be performed while another entry already exists.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else
+    {
+        @if (Model.hasPending && strStatus == "created")
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert" id="pending-alert">
+                <strong>Newly created seat(s) Pending Activation before able to display in PDF.<br />Please submit a Change Request Form for [New Space Activation] to Technology department via Work Portal.</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+                <strong>Entry @strStatus successfully.</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    }
+}
+@if (Model.duplicateStaffs.Count > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" id="duplicate-alert">
+                <strong>Warning: Duplicate Staff(s) detected for indicated seats as highlighted, please reassign each staff to one space only for:<br /></strong>
+                @foreach (var staff in Model.duplicateStaffs)
+                {
+                    @staff.ToString()
+                    ;
+                    <strong> &nbsp;</strong>
+                }
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<div>
+    <div style="float: left; padding-bottom: 10px;">
+        <a class='btn btn-primary btn-sm' id='btnViewStaff' asp-page='./ViewStaff'>View Staffs</a> <a class='btn btn-primary btn-sm' id='btnViewRoom' asp-page='./ViewRoom'>View Rooms</a> @if (Model.isAdmin)
+        {
+            <a class='btn btn-secondary btn-sm' id='btnViewLocation' asp-page='./ViewLocation'>View Locations</a>
+            <a class='btn btn-secondary btn-sm' id='btnNewSeat' asp-page='./Create'>Create new Seat</a>
+            <a class='btn btn-secondary btn-sm' id='btnAccessControl' asp-page='./AccessControl'>Access Control</a>
+        }
+        &emsp;<a class='btn btn-warning btn-sm' id='btnLegend' asp-page='./Legend'><strong>Modify Legend</strong></a>
+    </div>
+    <form method="POST">
+        <div style="float: right; padding-top: 5px;">
+            <button type="submit" class="btn btn-primary" formtarget="_blank">Generate PDF Plan</button>
+        </div>
+        <div style="float: right; padding-right: 10px; padding-top: 5px;">
+            <b>Location: </b><select id="ddlLocation" name="ddlLocation" asp-for="selectedLocationID" asp-items="@Model.Locations" onchange="sendLocData()"></select>
+        </div>
+    </form>
+    <div class="col-sm-3">
+        <input type="text" id="txtSearch" onkeyup="filterTable()" placeholder="Search for ...">
+    </div>
+</div>
+<table id="tblSeats" class="table">
+    <thead>
+        <tr>
+            <th>Space ID</th>
+            <th>Space Use</th>
+            <th>Floor</th>
+            <th>Name (Staff or Room)</th>
+            <th>Phone Number</th>
+            <th>Department</th>
+            <th>Modified On</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.listSeats)
+        {
+            <tr style="@((Model.duplicateStaffs.Contains(item.SpaceID)) ? "color: white" : "")" bgcolor="@((Model.duplicateStaffs.Contains(item.SpaceID)) ? "red" : "")">
+                <td>@item.SpaceID</td>
+                <td>@item.SpaceUse</td>
+                <td>@item.Floor</td>
+                <td>@item.Name</td>
+                <td>@item.PhoneNumber</td>
+                <td>@item.Department</td>
+                <td>@item.ModifiedOn</td>
+                <td>
+                    <a class="btn btn-primary btn-sm" asp-page="./Edit" asp-route-id="@item.SpaceID">Edit</a>
+                    @if (Model.isAdmin)
+                    {
+                        <a class="btn btn-danger btn-sm" asp-page="./Delete" asp-route-id="@item.SpaceID" onclick="return confirm('Are you sure you want to DELETE this row from the database?');">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts{
+    <script>
+        window.onpageshow = function (event) {
+            $('#ddlLocation').val('@Model.USE_LOCATION');
+            filterTable();
+        };
+        document.getElementById("btnViewStaff").onclick = function () {
+            document.getElementById("btnViewStaff").href += "?id=" + $('#ddlLocation').val() + "&name=" + $('#ddlLocation option:selected').text();
+        };
+        document.getElementById("btnViewRoom").onclick = function () {
+            document.getElementById("btnViewRoom").href += "?id=" + $('#ddlLocation').val() + "&name=" + $('#ddlLocation option:selected').text();
+        };
+        document.getElementById("btnViewLocation").onclick = function () {
+            document.getElementById("btnViewLocation").href += "?id=" + $('#ddlLocation').val();
+        };
+        document.getElementById("btnNewSeat").onclick = function () {
+            document.getElementById("btnNewSeat").href += "?id=" + $('#ddlLocation').val();
+        };
+        document.getElementById("btnLegend").onclick = function () {
+            document.getElementById("btnLegend").href += "?id=" + $('#ddlLocation').val() + "&name=" + $('#ddlLocation option:selected').text();
+        };
+        function askDel() {
+
+            if (confirm('Are you sure you want to DELETE this row from the database?')) {
+                return true;
+            }
+            else {
+                event.preventDefault();
+                return false;
+            }
+        }
+        function sendLocData() {
+            $("#success-alert").alert("close");
+            var token = '@Html.AntiForgeryToken()';
+            $('#txtSearch').val('');
+            $.ajax({
+                type: 'GET',
+                url: '?handler=Location',
+                data: { selectedLocationID: $('#ddlLocation').val() },
+                headers: {
+                    RequestVerificationToken: $(token).val()
+                },
+                success: function (data) {
+                    var urlBase = document.getElementById('btnViewStaff').href.split('/');
+                    urlBase.pop();
+                    urlBase = urlBase.join('/');
+                    $('#tblSeats tbody tr').remove();
+                    var items = '';
+                    $.each(data, function (i, item) {
+                        var row = '<tr>' + '<td>' + item.spaceID + '</td>'
+                            + '<td>' + item.spaceUse + '</td>'
+                            + '<td>' + item.floor + '</td>'
+                            + '<td>' + item.name + '</td>'
+                            + '<td>' + item.phoneNumber + '</td>'
+                            + '<td>' + (item.department == null ? "" : item.department) + '</td>'
+                            + '<td>' + item.modifiedOn + '</td>'
+                            + '<td> <a class="btn btn-primary btn-sm" href="' + urlBase + '/Edit?id=' + item.spaceID
+                            + '">Edit</a> @if (Model.isAdmin)
+        {
+            <a class="btn btn-danger btn-sm" href="' + urlBase + '/Delete?id=' + item.spaceID
+                        + '" onclick="askDel()">Delete</a>
+        }</td>'
+                            + '</tr>';
+                        $('#tblSeats tbody').append(row);
+                    });
+                },
+                error: function () {
+                    //alert("error");
+                }
+            })
+        }
+        function filterTable() {
+            var filter, txtValue;
+            filter = $('#txtSearch').val().trim().toLowerCase();
+            if (!filter) {
+                $('#tblSeats tbody tr').each(function () {
+                    this.style.display = '';
+                });
+                return;
+            }
+            $('#tblSeats tbody tr').each(function () {
+                $(this).css('display', 'none');
+                $(this).find('td').not(':last').each(function (column, td) {
+                    txtValue = $(td).text().trim().toLowerCase();
+                    if (~txtValue.indexOf(filter)) {
+                        $(td).parent().css('display', '');
+                    }
+                });
+            });
+        }
+        $("#success-alert").fadeTo(10000, 500).slideUp(500, function () {
+            $("#success-alert").slideUp(500);
+            $("#success-alert").alert("close");
+        });
+    </script>
+}

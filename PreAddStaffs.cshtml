@@ -1,0 +1,119 @@
+﻿@page
+@model SeatPlan.Pages.PreAddStaffsModel
+@{
+    ViewData["Title"] = "Pre-Add new Staffs";
+
+    String strStatus = Request.Query["status"].ToString();
+    var index = 0;
+}
+<h2>Pre-Add new Staffs</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (String.IsNullOrEmpty(strStatus) == false)
+{
+    @if (strStatus == "error")
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
+            <strong>An @strStatus was encountered. This operation cannot be performed while another entry already exists.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+            <strong>Entry @strStatus successfully.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}
+<form method="POST">
+    <div class="row mb-3">
+        <div class="col-sm-3">
+            <input type="text" id="txtSearchPreAdd" onkeyup="filterTablePreAdd()" placeholder="Search for ...">
+        </div>
+        <div class="col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary btn-sm" asp-page-handler="Save">Save Changes</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary btn-sm" id="btnCancel" asp-page="./ViewStaff" role="button">Cancel</a>
+        </div>
+    </div>
+    <table id="tblPreAdd" class="table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Display Name</th>
+                <th>Phone Number</th>
+                <th>Department</th>
+                <th>Country</th>
+                <th>Building</th>
+                <th>List count: @Model.preAddCount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.listStaffs)
+            {
+                <input type="hidden" id="FullName[@index]" name="listStaffsPost[@index].FullName" value="@item.FullName" />
+                <input type="hidden" name="listStaffsPost[@index].Name" value="@item.Name" />
+                <input type="hidden" name="listStaffsPost[@index].PhoneNumber" value="@item.PhoneNumber" />
+                <input type="hidden" name="listStaffsPost[@index].Department" value="@item.Department" />
+                <input type="hidden" name="listStaffsPost[@index].Country" value="@item.Country" />
+                <input type="hidden" name="listStaffsPost[@index].Building" value="@item.Building" />
+                <tr>
+                    <td>@item.FullName</td>
+                    <td>@item.Name</td>
+                    <td>@item.PhoneNumber</td>
+                    <td>@item.Department</td>
+                    <td>@item.Country</td>
+                    <td>@item.Building</td>
+                    <td><a class="btn btn-danger btn-sm" onclick="askRemove(this)" data-index="@index">Remove</a></td>
+                </tr>
+                index++;
+            }
+        </tbody>
+    </table>
+</form>
+@section Scripts{
+    <script>
+        window.onpageshow = function (event) {
+            filterTablePreAdd();
+        };
+        function filterTablePreAdd() {
+            var filter, txtValue;
+            filter = $('#txtSearchPreAdd').val().trim().toLowerCase();
+            if (!filter) {
+                $('#tblPreAdd tbody tr').each(function () {
+                    this.style.display = '';
+                });
+                return;
+            }
+            $('#tblPreAdd tbody tr').each(function () {
+                $(this).css('display', 'none');
+                $(this).find('td').not(':last').each(function (column, td) {
+                    txtValue = $(td).text().trim().toLowerCase();
+                    if (~txtValue.indexOf(filter)) {
+                        $(td).parent().css('display', '');
+                    }
+                });
+            });
+        }
+        $("#success-alert").fadeTo(10000, 500).slideUp(500, function () {
+            $("#success-alert").slideUp(500);
+            $("#success-alert").alert("close");
+        });
+        function askRemove(o) {
+            if (confirm('Are you sure you want to remove this row from the list?')) {
+                var p = o.parentNode.parentNode;
+                p.parentNode.removeChild(p);
+                var i = $(o).data("index");
+                document.getElementById("FullName[" + i + "]").setAttribute('value', '');
+            }
+        }
+    </script>
+}

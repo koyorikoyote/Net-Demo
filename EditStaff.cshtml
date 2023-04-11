@@ -1,0 +1,94 @@
+﻿@page
+@model SeatPlan.Pages.EditStaffModel
+@{
+}
+<h2>Edit Seat</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" id="error-alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (Model.successMessage.Length > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>@Model.successMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<form method="POST">
+    <input type="hidden" name="LocationID" value="@Model.staffInfo.LocationID" />
+    <input type="hidden" name="StaffID" value="@Model.staffInfo.StaffID" />
+    <input type="hidden" name="UrlBack" value="@Model.UrlBack" />
+    <select id="ddlPhoneExt" class="form-control" asp-items="@Model.PhoneExt" asp-for="SelectedPhoneExt" hidden>
+        <option value="">--Select Phone--</option>
+    </select>
+    <select id="ddlDisplayName" class="form-control" asp-items="@Model.DisplayName" asp-for="SelectedDisplayName" hidden>
+        <option value="">--Select DisplayName--</option>
+    </select>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Full Name</label>
+        <div class="col-sm-6">
+            <select id="ddlStaff" class="form-control" asp-items="@Model.Staff" asp-for="SelectedStaffName">
+                <option value="">--Select Staff Name--</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Display Name (Max. 11 characters)@Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <input type="text" id="txtDisplayName" class="form-control" name="StaffName" value="@Model.staffInfo.Name" maxlength="11" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Phone Number Ext.</label>
+        <div class="col-sm-6">
+            <input type="text" id="txtPhoneNumber" class="form-control" name="PhoneNumber" value="@Model.staffInfo.PhoneNumber" maxlength="11" tabindex="-1" onclick="askChange(this)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Location (Floor Building Country)@Html.Label("","*", new { style = "color:#ff0000"})</label>
+        <div class="col-sm-6">
+            <select id="ddlLocation" class="form-control" asp-items="@Model.Locations" asp-for="SelectedLocation">
+                <option value="0">--Select Location--</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="offset-sm-3 col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary" id="btnCancel" onclick="history.back()" role="button">Cancel</a>
+        </div>
+    </div>
+</form>
+@section Scripts{
+    <script>
+        $("#error-alert").fadeTo(3000, 500).slideUp(500, function () {
+            history.back();
+        });
+        $('#ddlStaff').change(function () {
+            $('#ddlPhoneExt').prop('selectedIndex', $('#ddlStaff').prop('selectedIndex'));
+            $('#txtPhoneNumber').val($('#ddlPhoneExt').val());
+            $('#ddlDisplayName').prop('selectedIndex', $('#ddlStaff').prop('selectedIndex'));
+            $('#txtDisplayName').val($('#ddlDisplayName').val());
+        });
+        function askChange(e) {
+            if (confirm('Are you sure you want to change this Phone to a value not on record?')) {
+                return true;
+            }
+            else {
+                $(e).blur();
+                return false;
+            }
+        }
+    </script>
+}

@@ -1,0 +1,104 @@
+﻿@page
+@model SeatPlan.Pages.ViewLocationModel
+@{
+    ViewData["Title"] = "View Locations";
+
+    String strStatus = Request.Query["status"].ToString();
+}
+<h2>View Locations</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (String.IsNullOrEmpty(strStatus) == false)
+{
+    @if (strStatus == "error")
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
+            <strong>An @strStatus was encountered. This operation cannot be performed while another entry already exists.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+            <strong>Entry @strStatus successfully.</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}
+<div>
+    <div style="float: left; padding-bottom: 10px;">
+        <a class='btn btn-primary btn-sm' id='btnNewLocation' asp-page='./CreateLocation'>Create new Location</a>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col-sm-3">
+        <input type="text" id="txtSearchLocations" onkeyup="filterTableLocations()" placeholder="Search for ...">
+    </div>
+    <div class="offset-sm-5 col-sm-3 d-grid">
+        <a class="btn btn-outline-primary btn-sm" id="btnBack" asp-page="./Index" role="button">Back to Home</a>
+    </div>
+</div>
+<table id="tblLocations" class="table">
+    <thead>
+        <tr>
+            <th>Floor</th>
+            <th>Building</th>
+            <th>Country</th>
+            <th>Modified On</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.listLocations)
+        {
+            <tr>
+                <td>@item.Floor</td>
+                <td>@item.Building</td>
+                <td>@item.Country</td>
+                <td>@item.ModifiedOn</td>
+                <td>
+                    <a class="btn btn-primary btn-sm" asp-page="./EditLocation" asp-route-id="@item.LocationID">Edit</a>
+                    <a class="btn btn-danger btn-sm" asp-page="./DeleteLocation" asp-route-id="@item.LocationID" onclick="return confirm('Are you sure you want to DELETE this row from the database?');">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts{
+    <script>
+        window.onpageshow = function (event) {
+            filterTableLocations();
+        };
+        document.getElementById("btnBack").onclick = function () {
+            document.getElementById("btnBack").href += "?id=" + @Model.tempLocationID;
+        };
+        function filterTableLocations() {
+            var filter, txtValue;
+            filter = $('#txtSearchLocations').val().trim().toLowerCase();
+            if (!filter) {
+                $('#tblLocations tbody tr').each(function () {
+                    this.style.display = '';
+                });
+                return;
+            }
+            $('#tblLocations tbody tr').each(function () {
+                $(this).css('display', 'none');
+                $(this).find('td').not(':last').each(function (column, td) {
+                    txtValue = $(td).text().trim().toLowerCase();
+                    if (~txtValue.indexOf(filter)) {
+                        $(td).parent().css('display', '');
+                    }
+                });
+            });
+        }
+        $("#success-alert").fadeTo(10000, 500).slideUp(500, function () {
+            $("#success-alert").slideUp(500);
+            $("#success-alert").alert("close");
+        });
+    </script>
+}

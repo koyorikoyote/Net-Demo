@@ -1,0 +1,97 @@
+﻿@page
+@model SeatPlan.Pages.CreateAccessModel
+@{
+    ViewData["Title"] = "Create User Access";
+}
+<h2>Create User Access</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" id="error-alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (Model.successMessage.Length > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>@Model.successMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<form method="POST">
+    <input type="hidden" id="hidSamAccountName" name="SamAccountName" value="@Model.accessControlInfo.SamAccountName" />
+    <select id="ddlSamDepartment" class="form-control" asp-items="@Model.SamDepartment" asp-for="SelectedSamDepartment" hidden>
+        <option value="">--SamAccountName Department--</option>
+    </select>
+    <select id="ddlCountryBuilding" class="form-control" asp-items="@Model.CountryBuilding" asp-for="SelectedCountryBuilding" hidden>
+        <option value="">--Country Building--</option>
+    </select>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Full Name</label>
+        <div class="col-sm-6">
+            <select id="ddlFullName" class="form-control" asp-items="@Model.FullName" asp-for="SelectedFullName">
+                <option value="">--Select User--</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Department</label>
+        <div class="col-sm-6">
+            <input type="text" id="txtDepartment" class="form-control" name="Department" value="@Model.accessControlInfo.Department" tabindex="-1" readonly />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Country</label>
+        <div class="col-sm-6">
+            <input type="text" id="txtCountry" class="form-control" name="Country" value="@Model.accessControlInfo.Country" tabindex="-1" readonly />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-3 col-form-label">Building</label>
+        <div class="col-sm-6">
+            <input type="text" id="txtBuilding" class="form-control" name="Building" value="@Model.accessControlInfo.Building" tabindex="-1" readonly />
+        </div>
+    </div>
+    <div class="form-check form-switch">
+        <input type="checkbox" class="form-check-input btn-outline-primary" name="CanEdit" checked="@Model.accessControlInfo.CanEdit" />
+        <label class="form-check-label">Can Edit</label>
+    </div>
+    <div class="form-check form-switch">
+        <input type="checkbox" class="form-check-input btn-outline-primary" name="IsAdmin" checked="@Model.accessControlInfo.IsAdmin" />
+        <label class="form-check-label">Is Admin</label>
+    </div>
+    <br />
+    <div class="form-check form-switch">
+        <input type="checkbox" class="form-check-input border-danger btn-outline-danger" name="DeniedAccess" checked="@Model.accessControlInfo.DeniedAccess" />
+        <label class="form-check-label">Deny Access</label>
+    </div>
+
+    <div class="row mb-3">
+        <div class="offset-sm-3 col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary" id="btnCancel" onclick="history.back()" role="button">Cancel</a>
+        </div>
+    </div>
+</form>
+@section Scripts{
+    <script>
+        $('#ddlFullName').change(function () {
+            $('#ddlSamDepartment').prop('selectedIndex', $('#ddlFullName').prop('selectedIndex'));
+            $('#hidSamAccountName').val($('#ddlSamDepartment').val().split('\\').reverse().pop());
+            $('#txtDepartment').val($('#ddlSamDepartment').val().split('\\').pop());
+            $('#ddlCountryBuilding').prop('selectedIndex', $('#ddlFullName').prop('selectedIndex'));
+            $('#txtCountry').val($('#ddlCountryBuilding').val().split('\\').reverse().pop());
+            $('#txtBuilding').val($('#ddlCountryBuilding').val().split('\\').pop());
+        });
+        $("#error-alert").fadeTo(3000, 500).slideUp(500, function () {
+            history.back();
+        });
+    </script>
+}

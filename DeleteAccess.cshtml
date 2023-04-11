@@ -1,0 +1,48 @@
+﻿@page
+@using System.Data.SqlClient;
+@using System.Text.RegularExpressions;
+@{
+    HttpHelper httpHelper = new HttpHelper();
+    if (String.IsNullOrEmpty(httpHelper.GetUserAccess()))
+    {
+        Response.Redirect("./AccessDenied");
+        return;
+    }
+    if (httpHelper.GetUserAccess() != "admin")
+    {
+        Response.Redirect("./AccessDenied");
+        return;
+    }
+    String SamAccountName = Request.Query["id"];
+    if (String.IsNullOrEmpty(SamAccountName)) return;
+    int rowsAffected;
+    try
+    {
+        String connectionString = DBConfig.ConnectionString;
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            String sql = "DELETE FROM WPSeatPlanUserAccess WHERE SamAccountName=@SamAccountName";
+            connection.Open();
+            using (SqlCommand command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@SamAccountName", SamAccountName);
+
+                rowsAffected = command.ExecuteNonQuery();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Exception: " + ex.Message);
+        Response.Redirect("./AccessControl?status=error");
+        return;
+    }
+    if (rowsAffected > 0)
+    {
+        Response.Redirect("./AccessControl?status=deleted");
+    }
+    else
+    {
+        Response.Redirect("./AccessControl?status=error");
+    }
+}

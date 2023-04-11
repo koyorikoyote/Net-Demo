@@ -1,0 +1,44 @@
+﻿@page
+@using System.Data.SqlClient;
+@using System.Text.RegularExpressions;
+@{
+    HttpHelper httpHelper = new HttpHelper();
+    if (String.IsNullOrEmpty(httpHelper.GetUserAccess()))
+    {
+        Response.Redirect("./AccessDenied");
+        return;
+    }
+    String StaffID = Request.Query["id"];
+    if (String.IsNullOrEmpty(StaffID)) return;
+    int rowsAffected;
+    try
+    {
+        String connectionString = DBConfig.ConnectionString;
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            String sql = "DELETE FROM WPSeatPlanStaffRL WHERE StaffID=@StaffID";
+            connection.Open();
+            using (SqlCommand command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@StaffID", StaffID);
+
+                rowsAffected = command.ExecuteNonQuery();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Exception: " + ex.Message);
+        Response.Redirect(Regex.Replace((Request.GetTypedHeaders().Referer.ToString()), @"&status=.*", "") + "&status=error");
+        return;
+    }
+    if (rowsAffected > 0)
+    {
+        Response.Redirect(Regex.Replace((Request.GetTypedHeaders().Referer.ToString()), @"&status=.*", "") + "&status=deleted");
+    }
+    else
+    {
+        Response.Redirect(Regex.Replace((Request.GetTypedHeaders().Referer.ToString()), @"&status=.*", "") + "&status=error");
+    }
+
+}

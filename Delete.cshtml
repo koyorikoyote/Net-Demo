@@ -1,0 +1,49 @@
+﻿@page
+@using System.Data.SqlClient;
+
+@{
+    HttpHelper httpHelper = new HttpHelper();
+    if (String.IsNullOrEmpty(httpHelper.GetUserAccess()))
+    {
+        Response.Redirect("./AccessDenied");
+        return;
+    }
+    if (httpHelper.GetUserAccess() != "admin")
+    {
+        Response.Redirect("./AccessDenied");
+        return;
+    }
+    String SpaceID = Request.Query["id"];
+    if (String.IsNullOrEmpty(SpaceID)) return;
+    int rowsAffected;
+    try
+    {
+        String connectionString = DBConfig.ConnectionString;
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            String sql = "DELETE FROM WPSeatPlan WHERE SpaceID=@SpaceID";
+            connection.Open();
+            using (SqlCommand command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@SpaceID", SpaceID);
+
+                rowsAffected = command.ExecuteNonQuery();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Exception: " + ex.Message);
+        Response.Redirect("./Index?status=error");
+        return;
+    }
+    if (rowsAffected > 0)
+    {
+        Response.Redirect("./Index?status=deleted");
+    }
+    else
+    {
+        Response.Redirect("./Index?status=error");
+    }
+
+}

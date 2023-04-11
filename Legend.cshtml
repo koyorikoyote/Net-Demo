@@ -1,0 +1,95 @@
+﻿@page
+@model SeatPlan.Pages.LegendModel
+@{
+    ViewData["Title"] = "Legend";
+
+    String strStatus = Request.Query["status"].ToString();
+    var index = 0;
+}
+<h2>Modify Legend @Model.LocationName</h2>
+
+@if (Model.errorMessage.Length > 0)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>@Model.errorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (Model.successMessage.Length > 0)
+{
+    <div class="row mb-3">
+        <div class="col-sm-9">
+            <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
+                <strong>@Model.successMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+<form method="POST">
+    <input type="hidden" name="LocationID" value="@Model.legendInfo.LocationID" />
+    <div class="row mb-3">
+        <div class="offset-sm-3 col-sm-3 d-grid">
+            <button type="submit" class="btn btn-primary btn-sm" asp-page-handler="Save" asp-route-id=@Request.Query["id"]>Submit</button>
+        </div>
+        <div class="col-sm-3 d-grid">
+            <a class="btn btn-outline-primary btn-sm" id="btnCancel" asp-page="./Index" role="button">Cancel</a>
+        </div>
+    </div>
+    <table id="tblLegend" class="table">
+        <thead>
+            <tr>
+                <th>Column 1 (tag)</th>
+                <th>Column 2 (description)</th>
+                <th>Column 3 (count)&emsp;<button class="btn btn-warning btn-sm btn-outline-dark" asp-page-handler="Autofill" asp-route-id=@Request.Query["id"] asp-route-name=@Request.Query["name"]><strong>Auto-fill</strong></button></th>
+                <th>Row Color</th>
+                <th>Modified On</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.listLegend)
+            {
+                <input type="hidden" name="listLegendPost[@index].LegendID" value="@item.LegendID" />
+                <input type="hidden" name="listLegendPost[@index].ModifiedOn" value="@item.ModifiedOn" />
+                <tr>
+                    <td><input type="text" class="form-control" name="listLegendPost[@index].Column1" value="@item.Column1" maxlength="15" /></td>
+                    <td><input type="text" class="form-control" name="listLegendPost[@index].Column2" value="@item.Column2" maxlength="30" /></td>
+                    <td><input type="text" class="form-control" name="listLegendPost[@index].Column3" value="@item.Column3" maxlength="5" /></td>
+                    <td>
+                        <select id="ddlRowColor" class="form-control" name="listLegendPost[@index].RowColor" asp-for="@item.RowColor">
+                            <option value="DarkBlue">Blue</option>
+                            <option value="FireBrick">Red</option>
+                            <option value="DarkOliveGreen">Green</option>
+                            <option value="Black">Black</option>
+                            <option value="#ad96e5">Purple</option>
+                            <option value="#ffe6a0">Yellow</option>
+                            <option value="SeaGreen">SeaGreen</option>
+                            <option value="#ffba4d">Orange</option>
+                        </select>
+                    </td>
+                    <td>@item.ModifiedOn</td>
+                </tr>
+                index++;
+            }
+        </tbody>
+    </table>
+</form>
+@section Scripts{
+    <script>
+        document.getElementById("btnCancel").onclick = function () {
+            document.getElementById("btnCancel").href += "?id=" + @Model.legendInfo.LocationID;
+        };
+        $("#success-alert").fadeTo(10000, 500).slideUp(500, function () {
+            $("#success-alert").slideUp(500);
+            $("#success-alert").alert("close");
+        });
+    </script>
+}
+@*@if (ViewData["Message"] != null)
+{
+    <script type="text/javascript">
+        window.onload = function () {
+            alert('@ViewData["Message"]');
+        };
+    </script>
+}*@
